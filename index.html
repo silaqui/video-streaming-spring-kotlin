@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Whatever Tube</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet">
+</head>
+<style>
+    #video-player {
+        display: none;
+    }
+
+    .container {
+        max-width: 1000px;
+    }
+
+    .row {
+        width: 100%;
+        height: 600px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+
+</style>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div>
+            <div>Your videos:</div>
+            <div id="your-videos">
+            </div>
+        </div>
+        <div>
+            <div id="now-playing"></div>
+            <div id="video-player">
+                <video id="video-screen" width="720px" height="480px" controls></video>
+            </div>
+        </div>
+    </div>
+
+    <form id="video-form">
+        <fieldset>
+            <legend>Upload a video</legend>
+            <label for="file">Video File</label>
+            <input id="file" name="file" type="file" accept="application/mp4">
+            <label for="name">Video Name</label>
+            <input id="name" name="name" type="text">
+            <button type="submit">Save</button>
+        </fieldset>
+    </form>
+</div>
+
+<script>
+    const form = document.querySelector('#video-form');
+    const videoDiv = document.querySelector('#video-player');
+    const videoScreen = document.querySelector('#video-screen');
+
+    const queryParams = Object.fromEntries(new URLSearchParams(window.location.search));
+
+    fetch('http://localhost:8080/video')
+        .then(result => result.json())
+        .then(result => {
+
+            const myVids = document.querySelector('#your-videos');
+            if (result.length > 0) {
+                for (let vid of result) {
+                    const li = document.createElement('div');
+                    const link = document.createElement('a');
+                    link.innerText = vid;
+                    link.href = window.location.origin + window.location.pathname + '?video=' + vid;
+                    li.appendChild(link);
+                    myVids.appendChild(li);
+                }
+            } else {
+                myVids.innerHTML = 'No videos found';
+            }
+
+        });
+
+    if (queryParams.video) {
+
+        videoScreen.src = `http://localhost:8080/video/${queryParams.video}`;
+        videoDiv.style.display = 'block';
+        document.querySelector('#now-playing')
+            .innerText = 'Now playing ' + queryParams.video;
+
+    }
+
+    form.addEventListener('submit', ev => {
+        ev.preventDefault();
+        let data = new FormData(form);
+        fetch('http://localhost:8080/video', {
+            method: 'POST',
+            body: data
+        }).then(result => result.text()).then(_ => {
+            window.location.reload();
+        });
+
+    });
+
+</script>
+</body>
+</html>
